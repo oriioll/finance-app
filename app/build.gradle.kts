@@ -76,7 +76,7 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.8.0")
 
     // Supabase (Versiones V3 Correctas)
-    implementation("io.ktor:ktor-client-android:2.3.12")
+    implementation("io.ktor:ktor-client-android:3.0.1")
     implementation("io.github.jan-tennert.supabase:postgrest-kt:3.0.0")
     implementation("io.github.jan-tennert.supabase:auth-kt:3.0.0")
     // Serialización
