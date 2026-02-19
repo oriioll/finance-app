@@ -15,3 +15,7 @@ fun Home(onLogout: () -> Unit): Unit {
         }
     }
 }
+
+fun makeMovement(userId: String = "bd11d87c-7da1-4d80-9b51-90e72bc1d8f4", import: Double, category: String = "Varios", isExpense: Boolean, typeId: Int): Boolean{
+    TODO()
+}
