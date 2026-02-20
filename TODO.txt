@@ -1,2 +1,4 @@
 1. BUGFIX: getMovementList() function returns an empty list. Then when its received as a parameter in getTotalPrice() function, since its an empty list it returns a 0.0 value
 -check supabase db select query
+
+2. When the function returns all db query, create fun to loop all list and for each element create a UI card
