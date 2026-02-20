@@ -16,14 +16,16 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.launch // NECESARIO para lanzar la tarea en segundo plano
+import kotlinx.coroutines.launch
+
 // IMPORTS DE SUPABASE V3
 import io.github.jan.supabase.auth.auth
-import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.auth.providers.builtin.Email // <-- FALTABA ESTE
 import supabase.SUPABASE
 
-// Asegúrate de tener tus colores y fuentes importados
-import dev.oriol.finance.ui.theme.* @Composable
+// Import de tus temas
+import dev.oriol.finance.ui.theme.*
+@Composable
 fun LoginScreen(onLoginSuccess: () -> Unit) {
     // Variables de estado del formulario
     var email by remember { mutableStateOf("") }

@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.serialization")
+    id("org.jetbrains.kotlin.plugin.compose") // AÑADE ESTA LÍNEA
 }
 
 android {
@@ -45,10 +46,6 @@ android {
         compose = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.11"
-    }
-
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -77,11 +74,10 @@ dependencies {
 
     // Supabase (Versiones V3 Correctas)
     implementation("io.ktor:ktor-client-android:3.0.1")
-    implementation("io.github.jan-tennert.supabase:postgrest-kt:3.0.0")
-    implementation("io.github.jan-tennert.supabase:auth-kt:3.0.0")
+    implementation("io.github.jan-tennert.supabase:postgrest-kt:3.0.1")
+    implementation("io.github.jan-tennert.supabase:auth-kt:3.0.1")
     // Serialización
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
-
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     // Testing
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
