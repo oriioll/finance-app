@@ -1,4 +1,6 @@
 package home
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.Column
@@ -31,12 +33,12 @@ import supabase.SUPABASE
 fun Home(onLogout: () -> Unit): Unit {
     val SCOPE = rememberCoroutineScope()
     val USER = SUPABASE.auth.currentSessionOrNull()?.user
-    val USER_ID = SUPABASE.auth.currentSessionOrNull()?.user?.id ?: ""
+    val USER_ID: String = SUPABASE.auth.currentSessionOrNull()?.user?.id ?: ""
     val DISPLAY_NAME: String? = USER?.userMetadata?.get("display_name")?.jsonPrimitive?.content
     var moneyList by remember { mutableStateOf<List<Movement>>(emptyList()) }
     val TOTAL_AMOUNT: Double = getTotalMoney(moneyList)
     LaunchedEffect(Unit) {
-        moneyList = getMovementList()
+        moneyList = getMovementList(USER_ID)
     }
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -85,7 +87,7 @@ fun Home(onLogout: () -> Unit): Unit {
                     style = SpanStyle(
                         color = AccentGreen,
                         fontSize = 25.sp,
-                        fontWeight = FontWeight.Normal,
+                        fontWeight = FontWeight.Bold,
                         fontFamily = Montserrat
                     )
                 ) {
@@ -112,7 +114,7 @@ fun Home(onLogout: () -> Unit): Unit {
  * @since 19/02/26
  */
 suspend fun makeMovement(userId: String = "bd11d87c-7da1-4d80-9b51-90e72bc1d8f4", quantity: Double, category: String = "Varios", isExpense: Boolean, typeId: Int): Boolean{
-    val NEW_MOVEMENT: Movement = Movement(null, userId, category, isExpense, typeId, quantity)
+    val NEW_MOVEMENT: Movement = Movement(movement_id = null, user_id = userId, category = category, isexpense = isExpense, type_id = typeId, amount = quantity)
     try {
         SUPABASE.postgrest["movement"].insert(NEW_MOVEMENT)
         return true
@@ -146,7 +148,11 @@ fun getTotalMoney(list: List<Movement>): Double {
  * @author Oriol Plazas Leon
  * @since 19/02/26
  */
-suspend fun getMovementList(): List<Movement> {
-    return SUPABASE.postgrest["movement"].select().decodeList<Movement>()
+suspend fun getMovementList(userId: String): List<Movement> {
+    return SUPABASE.postgrest["movement"].select{
+        filter{
+            eq("user_id", userId)
+        }
+    }.decodeList<Movement>()
 }
 
