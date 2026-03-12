@@ -117,9 +117,10 @@ private fun CreateMovementItem(m: Movement, type: String): Unit {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 2.dp),
+            .padding(vertical = 2.dp)
+        ,
         colors = CardDefaults.cardColors(
-            containerColor = Color(0x50707070)
+            containerColor = Color.White.copy(alpha = 0.08f)
         ),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
     ) {
@@ -136,7 +137,7 @@ private fun CreateMovementItem(m: Movement, type: String): Unit {
                 horizontalAlignment = Alignment.Start
             ) {
                 Text(
-                    text = "${m.amount}€",
+                    text = if(m.isexpense) "-${m.amount}€" else "+${m.amount}€",
                     color = if (m.isexpense) {
                         AccentRed
                     } else {
@@ -147,7 +148,7 @@ private fun CreateMovementItem(m: Movement, type: String): Unit {
                     fontSize = 16.sp
                 )
                 Text(
-                    text = "${type}",
+                    text = type,
                     color = Color.Gray,
                     fontFamily = Montserrat,
                     fontSize = 11.sp
