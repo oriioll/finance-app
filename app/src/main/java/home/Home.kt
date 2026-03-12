@@ -24,6 +24,7 @@ import dev.oriol.finance.ui.theme.Montserrat
 import dev.oriol.finance.ui.theme.White
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import dev.oriol.finance.ui.theme.AccentRed
 
@@ -62,6 +63,12 @@ fun Home(onLogout: () -> Unit): Unit {
 }
 
 
+/**
+ * Function that renders a card with cards inside each movement of the list
+ * @param moneyList the list of the money you want to render cards from
+ * @author Oriol Plazas Leon
+ * @since 12/03/2026
+ */
 @Composable
 private fun RenderMovements(moneyList: List<Movement>): Unit {
     Card(
@@ -81,19 +88,36 @@ private fun RenderMovements(moneyList: List<Movement>): Unit {
                 Text("No hay movimientos aún", color = Color.Gray)
             }
             moneyList.forEach {
-                CreateMovementItem(it)
+                var type: String = ""
+                when (it.type_id) {
+                    2 -> type = "Cash"
+                    3 -> type = "Credit Card"
+                    4 -> type = "Vinted"
+                    5 -> type = "Binance"
+                    6 -> type = "Wallapop"
+                    7 -> type = "World App"
+                }
+                CreateMovementItem(it, type)
 
             }
         }
     }
 }
 
+
+/**
+ * Function that creates a card of a movement - use it in a loop looping a list of Movement
+ * @param m the Movement you want to create a card for
+ * @param type the type of the movement (card, cash...)
+ * @author Oriol Plazas León
+ * @since 12/03/2026
+ */
 @Composable
-private fun CreateMovementItem(m: Movement): Unit {
+private fun CreateMovementItem(m: Movement, type: String): Unit {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 2.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0x50707070)
         ),
@@ -106,23 +130,35 @@ private fun CreateMovementItem(m: Movement): Unit {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Column(
+                modifier = Modifier
+                    .padding(2.dp),
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text(
+                    text = "${m.amount}€",
+                    color = if (m.isexpense) {
+                        AccentRed
+                    } else {
+                        AccentGreen
+                    },
+                    fontFamily = Montserrat,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+                Text(
+                    text = "${type}",
+                    color = Color.Gray,
+                    fontFamily = Montserrat,
+                    fontSize = 11.sp
+                )
+            }
+
             Text(
                 m.category,
                 color = Color.White,
                 fontFamily = Montserrat,
                 fontSize = 12.sp
-            )
-
-            Text(
-                text = "${m.amount}",
-                color = if (m.isexpense) {
-                    AccentRed
-                } else {
-                    AccentGreen
-                },
-                fontFamily = Montserrat,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
             )
         }
     }
@@ -141,6 +177,7 @@ private fun WelcomeCard(DISPLAY_NAME: String?, TOTAL_AMOUNT: Double): Unit {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 20.dp),
+
         colors = CardDefaults.cardColors(
             containerColor = Color(0x50707070)
         ),
@@ -148,15 +185,17 @@ private fun WelcomeCard(DISPLAY_NAME: String?, TOTAL_AMOUNT: Double): Unit {
     ) {
         Column(
             modifier = Modifier
+                .fillMaxWidth()
                 .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.Center,
         ) {
             Text(
                 buildAnnotatedString {
                     withStyle(
                         style = SpanStyle(
                             color = White,
-                            fontSize = 25.sp,
+                            fontSize = 22.sp,
                             fontWeight = FontWeight.Normal,
                             fontFamily = Montserrat
                         )
@@ -167,7 +206,7 @@ private fun WelcomeCard(DISPLAY_NAME: String?, TOTAL_AMOUNT: Double): Unit {
                     withStyle(
                         style = SpanStyle(
                             color = AccentGreen,
-                            fontSize = 25.sp,
+                            fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
                             fontFamily = Montserrat
                         )
@@ -181,7 +220,7 @@ private fun WelcomeCard(DISPLAY_NAME: String?, TOTAL_AMOUNT: Double): Unit {
                     withStyle(
                         style = SpanStyle(
                             color = AccentGreen,
-                            fontSize = 25.sp,
+                            fontSize = 32.sp,
                             fontWeight = FontWeight.Bold,
                             fontFamily = Montserrat
                         )
@@ -192,7 +231,7 @@ private fun WelcomeCard(DISPLAY_NAME: String?, TOTAL_AMOUNT: Double): Unit {
                     withStyle(
                         style = SpanStyle(
                             color = AccentGreen,
-                            fontSize = 25.sp,
+                            fontSize = 32.sp,
                             fontWeight = FontWeight.Bold,
                             fontFamily = Montserrat
                         )
