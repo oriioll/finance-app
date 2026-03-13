@@ -45,7 +45,7 @@ fun Home(onLogout: () -> Unit): Unit {
     var moneyList by remember { mutableStateOf<List<Movement>>(emptyList()) }
     val TOTAL_AMOUNT: Double = getTotalMoney(moneyList)
     LaunchedEffect(Unit) {
-        moneyList = getMovementList(USER_ID)
+        moneyList = getMovementList(USER_ID).reversed()
     }
     Column(
         modifier = Modifier
