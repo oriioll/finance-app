@@ -1,17 +1,22 @@
 package home
 
-import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
-import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -24,13 +29,24 @@ import dev.oriol.finance.ui.theme.Montserrat
 import dev.oriol.finance.ui.theme.White
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import dev.oriol.finance.ui.theme.AccentRed
+import dev.oriol.finance.ui.theme.BgDark
 
 // IMPORTS CORREGIDOS PARA V3
 import io.github.jan.supabase.auth.auth // <-- Cambiado de gotrue a auth
 import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.jsonPrimitive
 import model.Movement
 import supabase.SUPABASE
@@ -43,18 +59,25 @@ fun Home(onLogout: () -> Unit): Unit {
     val USER_ID: String = SUPABASE.auth.currentSessionOrNull()?.user?.id ?: ""
     val DISPLAY_NAME: String? = USER?.userMetadata?.get("display_name")?.jsonPrimitive?.content
     var moneyList by remember { mutableStateOf<List<Movement>>(emptyList()) }
-    val TOTAL_AMOUNT: Double = getTotalMoney(moneyList)
+    var totalAmount: Double = getTotalMoney(moneyList)
+    fun refreshList() {
+        SCOPE.launch {
+            moneyList = getMovementList(USER_ID).reversed()
+        }
+    }
     LaunchedEffect(Unit) {
-        moneyList = getMovementList(USER_ID).reversed()
+        refreshList()
     }
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        WelcomeCard(DISPLAY_NAME, TOTAL_AMOUNT)
+        WelcomeCard(DISPLAY_NAME, totalAmount)
+        RenderAddMovement(USER_ID, { refreshList() })
         RenderMovements(moneyList)
         Button(onClick = onLogout) {
             Text("Cerrar Sesión (Logout)")
@@ -245,6 +268,177 @@ private fun WelcomeCard(DISPLAY_NAME: String?, TOTAL_AMOUNT: Double): Unit {
     }
 }
 
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+/**
+ * Function that renders an add Movement card with a form to add a movement to the db
+ * @param userId the id of the user you want to make the movement for
+ * @param onMovementAdded the refresh function
+ * @author Oriol Plazas
+ * @since 16/03/2026
+ */
+private fun RenderAddMovement(userId: String, onMovementAdded: () -> Unit): Unit {
+    val SCOPE = rememberCoroutineScope()
+    val CONTEXT = LocalContext.current
+    var amountText by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf("Varios") }
+    var isExpense by remember { mutableStateOf(true) }
+    var isLoading by remember { mutableStateOf(false) }
+    val typeOptions = mapOf(2 to "Cash", 3 to "Credit Card", 4 to "Vinted", 5 to "Binance", 6 to "Wallapop", 7 to "World App")
+    var expandedType by remember { mutableStateOf(false) }
+    var selectedTypeId by remember { mutableStateOf(2) }
+    val expenseOptions = listOf("Expense", "Earning")
+    var expandedExpense by remember { mutableStateOf(false) }
+    var selectedExpenseOption by remember { mutableStateOf("Expense") }
+
+    // Función auxiliar para colores uniformes
+    @Composable
+    fun textFieldColors() = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = White,
+        unfocusedTextColor = White,
+        focusedBorderColor = AccentGreen,
+        unfocusedBorderColor = AccentGreen.copy(alpha = 0.4f),
+        focusedLabelColor = AccentGreen,
+        unfocusedLabelColor = White.copy(alpha = 0.6f)
+    )
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 10.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0x50707070)),
+        shape = RoundedCornerShape(24.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp), // Aumenté un pelín el padding exterior para que respire
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp) // Añadido un poco de espacio entre campos
+        ) {
+            Text("New movement", color = AccentGreen, fontFamily = Montserrat, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+
+            // FILA 1: Amount y Type
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = amountText,
+                    onValueChange = { amountText = it },
+                    label = { Text("Amount", fontSize = 12.sp) },
+                    // ELIMINADO: .height(55.dp) - Ahora se ajusta solo
+                    modifier = Modifier.weight(1f),
+                    // REDUCIDO: De 20.sp a 16.sp para que no colapse el padding
+                    textStyle = androidx.compose.ui.text.TextStyle(fontWeight = FontWeight.Bold, fontSize = 16.sp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = if (isExpense) AccentRed else AccentGreen,
+                        unfocusedTextColor = if (isExpense) AccentRed else AccentGreen,
+                        focusedBorderColor = AccentGreen,
+                        unfocusedBorderColor = AccentGreen.copy(alpha = 0.4f)
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
+                )
+
+                ExposedDropdownMenuBox(
+                    expanded = expandedExpense,
+                    onExpandedChange = { expandedExpense = !expandedExpense },
+                    modifier = Modifier.weight(0.8f)
+                ) {
+                    OutlinedTextField(
+                        value = selectedExpenseOption,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Type", fontSize = 12.sp) },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedExpense) },
+                        // ELIMINADO: .height(55.dp)
+                        modifier = Modifier.menuAnchor(),
+                        textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp), // Texto un poco más pequeño
+                        colors = textFieldColors(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    ExposedDropdownMenu(expanded = expandedExpense, onDismissRequest = { expandedExpense = false }) {
+                        expenseOptions.forEach { option ->
+                            DropdownMenuItem(
+                                text = { Text(option, fontSize = 14.sp) },
+                                onClick = { selectedExpenseOption = option; isExpense = (option == "Expense"); expandedExpense = false }
+                            )
+                        }
+                    }
+                }
+            }
+
+            // FILA 2: Category
+            OutlinedTextField(
+                value = category,
+                onValueChange = { category = it },
+                label = { Text("Category", fontSize = 12.sp) },
+                // ELIMINADO: .height(55.dp)
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp),
+                colors = textFieldColors(),
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true
+            )
+
+            // FILA 3: Payment Method
+            ExposedDropdownMenuBox(
+                expanded = expandedType,
+                onExpandedChange = { expandedType = !expandedType },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = typeOptions[selectedTypeId] ?: "",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Payment Method", fontSize = 12.sp) },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedType) },
+                    // ELIMINADO: .height(55.dp)
+                    modifier = Modifier.menuAnchor().fillMaxWidth(),
+                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp),
+                    colors = textFieldColors(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                ExposedDropdownMenu(expanded = expandedType, onDismissRequest = { expandedType = false }) {
+                    typeOptions.forEach { (id, label) ->
+                        DropdownMenuItem(
+                            text = { Text(label, fontSize = 14.sp) },
+                            onClick = { selectedTypeId = id; expandedType = false }
+                        )
+                    }
+                }
+            }
+
+            // BOTÓN DE GUARDAR
+            ElevatedButton(
+                onClick = {
+                    try {
+                        val amount = amountText.toDouble()
+                        isLoading = true
+                        SCOPE.launch {
+                            val success = makeMovement(userId, amount, category, isExpense, selectedTypeId)
+                            if (success) {
+                                Toast.makeText(CONTEXT, "Added!", Toast.LENGTH_SHORT).show()
+                                amountText = ""; onMovementAdded()
+                            } else {
+                                Toast.makeText(CONTEXT, "DB Error", Toast.LENGTH_SHORT).show()
+                            }
+                            isLoading = false
+                        }
+                    } catch (e: Exception) { Toast.makeText(CONTEXT, "Invalid format", Toast.LENGTH_SHORT).show() }
+                },
+                modifier = Modifier.fillMaxWidth(0.8f).padding(top = 8.dp), // Cambiado height por padding
+                enabled = !isLoading,
+                colors = ButtonDefaults.elevatedButtonColors(containerColor = AccentGreen, contentColor = BgDark),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                if (isLoading) CircularProgressIndicator(color = BgDark, modifier = Modifier.size(20.dp))
+                else Text("Add Movement", fontFamily = Montserrat, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+
 /**
  * Function that inserts into db a new movement with the data in the parameter
  * @param userId the id of the user that makes movement
@@ -311,4 +505,3 @@ suspend fun getMovementList(userId: String): List<Movement> {
         }
     }.decodeList<Movement>()
 }
-
