@@ -13,8 +13,8 @@ android {
         applicationId = "dev.oriol.finance"
         minSdk = 24
         targetSdk = 35
-        versionCode = 2
-        versionName = "2.0"
+        versionCode = 3  // INCREMENTA ESTE NÚMERO cada vez que actualices
+        versionName = "2.1"  // Actualiza también este con el formato "major.minor"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
